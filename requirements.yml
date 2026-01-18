@@ -1,0 +1,23 @@
+name: modeling_studio
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - qt=5.15
+  - pyqt=5.15
+  - numpy
+  - scipy
+  - pyvista
+  - pyvistaqt
+  - trimesh
+  - numpy-stl
+  - scikit-image
+  - pythonocc-core
+  - oct2py
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - pip
+  - pip:
+    - tkmacosx
