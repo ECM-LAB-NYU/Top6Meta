@@ -524,4 +524,4 @@ generate_layered(
 
 ## Acknowledgements
 
-This research was partially carried out using the Core Technology Platforms resources at New York University, Abu Dhabi. The authors also gratefully acknowledge the Computer Centre of the Department of Computer Engineering and Informatics at the University of Patras for providing the computational infrastructure that supported portions of this work.
+This research was conducted using institutional and computing resources at New York University Abu Dhabi. The authors also gratefully acknowledge the Computer Centre of the Department of Computer Engineering and Informatics at the University of Patras for providing the computational infrastructure that supported portions of this work.
