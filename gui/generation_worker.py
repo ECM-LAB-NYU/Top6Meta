@@ -1,3 +1,25 @@
+# =============================================================================
+# Top-6-Class MetaStudio (Top6Meta)
+# Version: 1.0
+#
+# A Python HPC framework for modeling architected materials and metastructures.
+#
+# Authors:
+#   - Agyapal Singh [1]
+#   - Georgios Mermigkis [2]
+#   - Panagiotis Hadjidoukas [2]
+#   - Nikolaos Karathanasopoulos [1]
+#
+# Affiliations:
+#   [1] New York University, Department of Engineering,
+#       Abu Dhabi, United Arab Emirates
+#   [2] Computer Engineering and Informatics Department,
+#       University of Patras, Greece
+#
+# © 2026 The Authors
+#
+# License: MIT License
+# =============================================================================
 import sys
 import os
 import pickle

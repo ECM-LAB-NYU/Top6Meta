@@ -158,7 +158,7 @@ F, V, FinalVolumeFrac, FinalSurfaceArea = tpms_core.generate_tpms(
 | **Thickness Parameters** | For `Sandwich`: `Bfcplt_tkns`, `Tfcplt_tkns`; For `Beam`: `LSuprt_tkns`, `RSuprt_tkns`                | Positive floats; must be compatible with domain height    |
 | **Shape**                | Domain type: `Cubic` or `Cylindrical`                                                                  | —                                                         |
 | **Dimensions**           | Cubic: `a`, `b`, `c`; Cylindrical: `rad`, `heit`                                                       | Positive floats (≈0.2–1000)                               |
-| **Repetitions**          | `nx`, `ny`, `nz` — unit cell replication counts                                                        | Integers 2–5                                           |
+| **Repetitions**          | `nx`, `ny`, `nz` — unit cell replication counts                                                        | Integers 2–50                                           |
 | **Volume_Fraction**      | Target relative density                                                                                | Range: 10–50%                                     |
 | **Rotation Angles**      | `XD_Roll`, `YD_pitch`, `ZD_yaw`                                                                        | 0–180°                                                    |
 | **Stretch Factors**      | `Alph_StrchX`, `Beta_StrchY`, `Gamma_StrchZ`                                                           | Floats ≈0.5–2                                             |
@@ -225,7 +225,7 @@ F, V, Vol_frac, FSurf = tpms_core.generate_strut(
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | **DesignType**                   | Strut design mode: `StrutD` (radius-controlled) or `VolFracBased` (density-controlled)                                                      | Determines whether radii or volume fraction define geometry                   |
 | **latticeFamily**                | 5: Standard Octet, 6: Reinforced Octet, 7: Octahedral, 8: Reinforced Octahedral, 9: Circular Octahedral, 10: BCC, 11: FCC, 12: Dodecahedral | Allowed range: 5–12                                                           |
-| **Repetitions**                  | `xRep`, `yRep`, `zRep` — unit-cell replication counts                                                                                       | Integers 2–5                                                               |
+| **Repetitions**                  | `xRep`, `yRep`, `zRep` — unit-cell replication counts                                                                                       | Integers 2–50                                                               |
 | **Dimensions**                   | `sx`, `sy`, `sz` — unit-cell dimensions                                                                                                     | Positive floats (~0.2–1000)                                                   |
 | **MDP**                  | Resolution of the single-cell discretization                                                                                                | Integers; 50–1000 allowed; 50–150 recommended                                 |
 | **finalLatticeRes**              | Resolution of the assembled full lattice                                                                                                    | Integers; 50–1000 allowed; 50–150 recommended                                 |
@@ -291,11 +291,11 @@ F, V, FinalVolumeFrac, FinalSurfaceArea = tpms_core.generate_hybrid(
 | **HybridType**      | Hybrid transition geometry: 1 = Linear, 2 = Cylindrical, 3 = Spherical                   | Selects transition profile                           |
 | **CylHyType**       | For cylindrical hybrids: 1 = along 1 axis, 2 = along 2 axes, 3 = along all 3 axes        | Used only when `HybridType = 2`                      |
 | **Dimensions**      | Global domain dimensions: `a`, `b`, `c`                                                  | Positive floats (~0.2–1000)                          |
-| **Repetitions**     | Unit-cell repetitions per layer: `nx`, `ny`, `nz`                                        | Lists of integers in the range 2–5               |
+| **Repetitions**     | Unit-cell repetitions per layer: `nx`, `ny`, `nz`                                        | Lists of integers in the range 2–50               |
 | **Volume_Fraction** | Layer-wise density targets (e.g., `[30, 30]`)                                            | Range: 10–50%                                        |
 | **MDP**             | Implicit-field sampling resolution                                                        | 50–1000 allowed; 50–150 recommended                 |
 | **trans**           | Transition point (linear) or radius (cylindrical/spherical)                              | 0.2-0.8 * length                                     |
-| **trans_quality**   | Transition smoothness control (higher = finer blend)                                     | Integer 1–40                                         |
+| **trans_quality**   | Transition smoothness control (lower = finer blend)                                     | Integer 1–40                                         |
 | **IPC**             | `IPC_N` (primary phase), `IPC_Y` (primary + complementary phase)                         | `IPC_Y` returns full IPC pair                        |
 | **savestl**         | Save generated hybrid geometry as `.stl`                                                 | `True` / `False`                                     |
 | **run_parallel**    | Enables multiprocessing (layer-level parallelism)                                        | `True` / `False`                                     |
@@ -348,7 +348,7 @@ F₁, V₁, F₂, V₂, Vol_frac, FSurf = tpms_core.generate_layered(
 | **Num_layers**    | Number of stacked layers                                           | Integer 2–9                                              |
 | **Layer_density** | Density target for each layer (e.g., `[70, 30]`)                   | Values should sum to 100% (layer-wise partition)         |
 | **Dimensions**    | Global domain size: `a`, `b`, `c`                                  | Positive floats (~0.2–1000)                              |
-| **Repetitions**   | Unit-cell repetitions: `nx`, `ny`, `nz`                            | Integers 2–5                                         |
+| **Repetitions**   | Unit-cell repetitions: `nx`, `ny`, `nz`                            | Integers 2–50                                         |
 | **MDP**           | Resolution of implicit-field sampling                              | 50–1000 allowed; 50–150 recommended                      |
 | **W_Tnum**        | Wave-number parameter (used for SPIN-based layered structures)     | Integers ≈100–10000                                      |
 | **savestl**       | Save generated layered/IPC geometry as `.stl`                      | `True` / `False`                                         |

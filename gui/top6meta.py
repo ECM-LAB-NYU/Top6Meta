@@ -1,3 +1,25 @@
+# =============================================================================
+# Top-6-Class MetaStudio (Top6Meta)
+# Version: 1.0
+#
+# A Python HPC framework for modeling architected materials and metastructures.
+#
+# Authors:
+#   - Agyapal Singh [1]
+#   - Georgios Mermigkis [2]
+#   - Panagiotis Hadjidoukas [2]
+#   - Nikolaos Karathanasopoulos [1]
+#
+# Affiliations:
+#   [1] New York University, Department of Engineering,
+#       Abu Dhabi, United Arab Emirates
+#   [2] Computer Engineering and Informatics Department,
+#       University of Patras, Greece
+#
+# © 2026 The Authors
+#
+# License: MIT License
+# =============================================================================
 import sys
 import numpy as np
 import pyvista as pv
@@ -43,7 +65,7 @@ z_repo_for_hybrid = []                                      # Hybrid has 1 repet
 vol_fraction_for_hybrid = []                                # Hybrid has 1 volume fraction for each layer
 waves_number = 1000                                         # for spinodal  (waves range: 100-10000) - (dont have decimal)
 number_of_layers = 2                                        # for hybrid and layered (hybrid 2 or 3, layered 2..9)
-transition_quality = 20                                     # for hybrid (transition quality range: 1-40 - translate to "Low", "Medium", "High")
+transition_quality = 5                                     # for hybrid (transition quality range: 1-40 - translate to "Low", "Medium", "High")
 transition_location = "0.5"                                 # for hybrid - is a value between 0.2-0.8 with default value 0.5
 layer_densities = []                                        # for layered - each layer has a different density, they have to sum up to 100 
                                                             # layer_density for each layer = volume_fraction for each layer
@@ -344,13 +366,13 @@ class TPMSInterface(QMainWindow):
             z_rotation = 0
         elif category == "Hybrid":
             number_of_layers = 2
-            transition_quality = 20
+            transition_quality = 5
             grading_for_hybrid = "Linear"
             resolution_points = 50
             cylindrical_hybrid_type = "Triple-axis cylindrical (y, x, z)"
             transition_location = "0.5"
-            length = 20
-            height = 10
+            length = 10
+            height = 20
             width = 10
             x_repetitions = 2
             y_repetitions = 2
@@ -942,25 +964,24 @@ class TPMSInterface(QMainWindow):
                 layers_label = QLabel("<b>Total Specimen Dimensions</b>")
                 layers_label.setFont(QFont('Arial', 15))
                 self.dim_layout.addRow(layers_label)
-                
-            self.length_input = QLineEdit()
             
-            # Hybrid has 40 as default length
-            if type == "Hybrid":
-                length = 20
-                self.length_input.setText("20")
-            else:
-                length = 10
-                self.length_input.setText("10")
-                
-            height = 10
+            length=10
             width = 10
-                
+
+            self.length_input = QLineEdit()
+            self.length_input.setText("10")
             self.length_input.setValidator(QRegExpValidator(QRegExp(r"[0-9]*\.?[0-9]*")))
             self.length_input.textChanged.connect(lambda text: self.update_length(text))
             
             self.height_input = QLineEdit()
-            self.height_input.setText("10")
+            # Hybrid has 20 as default height
+            if type == "Hybrid":
+                height = 20
+                self.height_input.setText("20")
+            else:
+                height = 10
+                self.height_input.setText("10")
+
             self.height_input.setValidator(QRegExpValidator(QRegExp(r"[0-9]*\.?[0-9]*")))
             self.height_input.textChanged.connect(lambda text: self.update_height(text))
             
@@ -970,8 +991,8 @@ class TPMSInterface(QMainWindow):
             self.width_input.textChanged.connect(lambda text: self.update_width(text))
             
             self.dim_layout.addRow("Length (mm):", self.length_input)
-            self.dim_layout.addRow("Height (mm):", self.height_input)
             self.dim_layout.addRow("Width (mm):", self.width_input)
+            self.dim_layout.addRow("Height (mm):", self.height_input)
     
     def popup_empty_values(self):
         msg = QMessageBox()
@@ -1092,7 +1113,7 @@ class TPMSInterface(QMainWindow):
             
             resolution_points = 50
             transition_location = "0.5"
-            transition_quality = 20
+            transition_quality = 5
             
             if not number_of_layers or not length or not height or not width:
                 self.popup_empty_values()
@@ -2819,9 +2840,9 @@ class SecondPage(QMainWindow):
             # length, height, width & connect with update functions
             length_layout, self.length_input = self.create_input_field("Length (X, mm):", "10", QRegExpValidator(QRegExp(r"[0-9]*\.?[0-9]*")))
             self.length_input.textChanged.connect(lambda text: self.update_length(text))
-            height_layout, self.height_input = self.create_input_field("Height (Y, mm):", "10", QRegExpValidator(QRegExp(r"[0-9]*\.?[0-9]*")))
-            self.height_input.textChanged.connect(lambda text: self.update_height(text))
-            width_layout, self.width_input = self.create_input_field("Width (Z, mm):", "10", QRegExpValidator(QRegExp(r"[0-9]*\.?[0-9]*")))
+            height_layout, self.height_input = self.create_input_field("Width (Y, mm):", "10", QRegExpValidator(QRegExp(r"[0-9]*\.?[0-9]*")))
+            self.height_input.textChanged.connect(lambda text: self.update_height(text))    # Note: don't get confused when seeing "width" -> update_height func call
+            width_layout, self.width_input = self.create_input_field("Height (Z, mm):", "10", QRegExpValidator(QRegExp(r"[0-9]*\.?[0-9]*")))
             self.width_input.textChanged.connect(lambda text: self.update_width(text))
             
             self.config_layout.addLayout(length_layout)
@@ -3958,11 +3979,11 @@ class SecondPage(QMainWindow):
         self.transition_quality_label = QLabel(f"Quality (k): {int(transition_quality)}")
         label_container = QWidget()
         label_layout = QHBoxLayout()
-        label_layout.addWidget(QLabel("Low"))
+        label_layout.addWidget(QLabel("High"))
         label_layout.addStretch()
         label_layout.addWidget(QLabel("Medium"))
         label_layout.addStretch()
-        label_layout.addWidget(QLabel("High"))
+        label_layout.addWidget(QLabel("Low"))
         label_container.setLayout(label_layout)
         transition_quality_layout.addWidget(self.transition_quality_label)
         transition_quality_layout.addWidget(self.transition_quality_slider)
@@ -4087,7 +4108,7 @@ class SecondPage(QMainWindow):
         elif variable == "Resolution":
             msg.setText("Resolution points should be between 50 and 1000.")
         elif variable == "Repetitions":
-            msg.setText("Repetitions (x, y, z) should be between 2 and 5.")
+            msg.setText("Repetitions (x, y, z) should be between 2 and 50.")
         elif variable == "Dimensions":
             msg.setText("Dimensions should be between 0.2 and 1000.")
         elif variable == "Stretching":
@@ -4128,7 +4149,7 @@ class SecondPage(QMainWindow):
             return 1
     
     def check_range_reps(self):
-        if int(x_repetitions) < 2 or int(x_repetitions) > 5 or int(y_repetitions) < 2 or int(y_repetitions) > 5 or int(z_repetitions) < 2 or int(z_repetitions) > 5:
+        if int(x_repetitions) < 2 or int(x_repetitions) > 50 or int(y_repetitions) < 2 or int(y_repetitions) > 50 or int(z_repetitions) < 2 or int(z_repetitions) > 50:
             self.popup_wrong_range_values("Repetitions")
             return 1
         
@@ -4187,7 +4208,7 @@ class SecondPage(QMainWindow):
     
     def check_range_reps_for_hybrid(self):
         for i in range(1, int(number_of_layers) + 1):
-            if int(x_rep_for_hybrid[i-1]) < 2 or int(x_rep_for_hybrid[i-1]) > 5 or int(y_rep_for_hybrid[i-1]) < 2 or int(y_rep_for_hybrid[i-1]) > 5 or int(z_rep_for_hybrid[i-1]) < 2 or int(z_rep_for_hybrid[i-1]) > 5:
+            if int(x_rep_for_hybrid[i-1]) < 2 or int(x_rep_for_hybrid[i-1]) > 50 or int(y_rep_for_hybrid[i-1]) < 2 or int(y_rep_for_hybrid[i-1]) > 50 or int(z_rep_for_hybrid[i-1]) < 2 or int(z_rep_for_hybrid[i-1]) > 50:
                 self.popup_wrong_range_values("Repetitions")
                 return 1
         
@@ -4445,8 +4466,8 @@ class SecondPage(QMainWindow):
                 
             if form_shape=="Cubic":
                 params['a'] = float(length)
-                params['b'] = float(width)
-                params['c'] = float(height)
+                params['b'] = float(height)
+                params['c'] = float(width)
             elif form_shape=="Cylindrical":
                 params['rad'] = float(radius)
                 params['heit'] = float(height)
@@ -4695,13 +4716,13 @@ class SecondPage(QMainWindow):
             # fixed for STRUT
             params['sampleName'] = "StrutSample"
             
-            params['xRep'] = int(x_repetitions)
-            params['yRep'] = int(y_repetitions)
+            params['xRep'] = int(y_repetitions)
+            params['yRep'] = int(x_repetitions)
             params['zRep'] = int(z_repetitions)
             
-            params['sx'] = float(length)
-            params['sy'] = float(height)
-            params['sz'] = float(width)
+            params['sx'] = float(width)
+            params['sy'] = float(length)
+            params['sz'] = float(height)
             
             params['MDP'] = int(resolution_points)
             params['finalLatticeRes'] = int(resolution_points)
@@ -4864,7 +4885,8 @@ class SecondPage(QMainWindow):
             
             # for the transition location we need to have a value for each layer except the last one
             #params['trans_position'] = float(transition_location) * int(length)
-            params['trans'] = float(transition_location) * float(length)
+            # params['trans'] = float(transition_location) * float(length)
+            params['trans'] = float(transition_location) * float(height)
             
             # disable generation button
             self.generate_button.setEnabled(False)
@@ -5444,7 +5466,7 @@ class AboutDialog(QDialog):
             "Georgios Mermigkis<br>"
             "Panagiotis Hadjidoukas<br>"
             "Nikolaos Karathanasopoulos<br><br>"
-            "© 2025"
+            "© 2026"
         )
         label.setTextFormat(Qt.RichText)
         label.setAlignment(Qt.AlignLeft)
