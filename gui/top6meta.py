@@ -3961,7 +3961,7 @@ class SecondPage(QMainWindow):
                 self.popup_empty_values()
                 return
 
-            if left_support_thick < 0 or right_support_thick < 0:
+            if float(left_support_thick) < 0 or float(right_support_thick) < 0:
                 self.popup_wrong_range_values("Support_Thickness")
                 return
 
@@ -4700,7 +4700,6 @@ class SecondPage(QMainWindow):
             #F0, V0, F1, V1, Final_Vol_Frac, Final_Surface = tpms_core.generate_layered(**params)
 
     def save_cardfile(self):
-        # ask the user what type of file they want to save & the path for it
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save File",
@@ -4713,7 +4712,40 @@ class SecondPage(QMainWindow):
 
         print(file_path)
 
-        # handle Layered case separately because it has two meshes
+        def fix_mesh_with_trimesh(pv_mesh):
+            """Convert to trimesh, repair, convert back to pyvista."""
+            import trimesh
+            tm = trimesh.Trimesh(
+                vertices=pv_mesh.points,
+                faces=pv_mesh.faces.reshape(-1, 4)[:, 1:],
+                process=False
+            )
+
+            # print("Before:")
+            # print("  Watertight:", tm.is_watertight)
+            # print("  Winding consistent:", tm.is_winding_consistent)
+
+            if not tm.is_watertight or not tm.is_winding_consistent:
+                tm.update_faces(tm.unique_faces())
+                tm.update_faces(tm.nondegenerate_faces())
+                tm.remove_unreferenced_vertices()
+                tm.merge_vertices()
+                trimesh.repair.fix_winding(tm)
+                trimesh.repair.fix_normals(tm)
+                if tm.volume < 0:
+                    tm.invert()
+                tm.remove_unreferenced_vertices()
+                tm.process(validate=True)
+
+            # print("\nAfter:")
+            # print("  Watertight:", tm.is_watertight)
+            # print("  Winding consistent:", tm.is_winding_consistent)
+
+            return pv.wrap(tm.as_open3d.to_legacy()) if False else pv.PolyData(
+                tm.vertices,
+                np.hstack([np.full((len(tm.faces), 1), 3), tm.faces])
+            )
+
         try:
             if hasattr(self, 'F0') and hasattr(self, 'V0') and hasattr(self, 'F1') and hasattr(self, 'V1'):
                 if file_path.endswith(".stl"):
@@ -4721,78 +4753,56 @@ class SecondPage(QMainWindow):
                     file0 = f"{base_path}_0.stl"
                     file1 = f"{base_path}_1.stl"
 
-                    # use your existing create_pyvista_mesh function to ensure consistency
-                    mesh0 = self.create_pyvista_mesh(self.F0, self.V0)
-                    mesh1 = self.create_pyvista_mesh(self.F1, self.V1)
+                    mesh0 = fix_mesh_with_trimesh(self.create_pyvista_mesh(self.F0, self.V0))
+                    mesh1 = fix_mesh_with_trimesh(self.create_pyvista_mesh(self.F1, self.V1))
 
                     mesh0.save(file0)
                     mesh1.save(file1)
 
-                    QMessageBox.information(
-                        self,
-                        "Success",
-                        f"Layered model successfully saved to:\n{file0}\n{file1}"
-                    )
+                    QMessageBox.information(self, "Success", f"Layered model successfully saved to:\n{file0}\n{file1}")
                     return
 
                 elif file_path.endswith(".stp") or file_path.endswith(".step"):
-                    # create temporary directory for intermediate files
                     import tempfile
                     temp_dir = tempfile.mkdtemp()
 
                     try:
-                        # create both meshes
-                        mesh0 = self.create_pyvista_mesh(self.F0, self.V0)
-                        mesh1 = self.create_pyvista_mesh(self.F1, self.V1)
+                        mesh0 = fix_mesh_with_trimesh(self.create_pyvista_mesh(self.F0, self.V0))
+                        mesh1 = fix_mesh_with_trimesh(self.create_pyvista_mesh(self.F1, self.V1))
 
-                        # save as temporary STL files
                         stl_file0 = os.path.join(temp_dir, "temp0.stl")
                         stl_file1 = os.path.join(temp_dir, "temp1.stl")
                         mesh0.save(stl_file0)
                         mesh1.save(stl_file1)
 
-                        # initialize STEP writer
                         step_writer = STEPControl_Writer()
                         shape0 = TopoDS_Shape()
                         shape1 = TopoDS_Shape()
                         stl_reader = StlAPI_Reader()
 
-                        # read both STL files
                         if not stl_reader.Read(shape0, stl_file0):
                             raise Exception("Failed to read first layer STL file")
                         if not stl_reader.Read(shape1, stl_file1):
                             raise Exception("Failed to read second layer STL file")
 
-                        # transfer both shapes to STEP
                         if not step_writer.Transfer(shape0, STEPControl_AsIs):
                             raise Exception("Failed to transfer first layer to STEP")
                         if not step_writer.Transfer(shape1, STEPControl_AsIs):
                             raise Exception("Failed to transfer second layer to STEP")
 
-                        # show progress popup
                         self.show_step_saving_popup()
                         QApplication.processEvents()
 
-                        # write combined STEP file
                         if not step_writer.Write(file_path):
                             raise Exception("Failed to write STEP file")
 
-                        QMessageBox.information(
-                            self,
-                            "Success",
-                            f"Layered model successfully saved to {file_path}"
-                        )
+                        QMessageBox.information(self, "Success", f"Layered model successfully saved to {file_path}")
 
                     except Exception as e:
-                        QMessageBox.critical(
-                            self,
-                            "Error",
-                            f"Failed to save STEP file: {str(e)}"
-                        )
+                        QMessageBox.critical(self, "Error", f"Failed to save STEP file: {str(e)}")
                         return
 
                     finally:
-                        # clean up temporary files
                         if os.path.exists(stl_file0):
                             os.remove(stl_file0)
                         if os.path.exists(stl_file1):
@@ -4804,15 +4814,15 @@ class SecondPage(QMainWindow):
 
                     return
 
-            # original handling for non-layered cases
+            # Non-layered cases
             dataset = self.plotter.renderer.GetActors().GetLastActor().GetMapper().GetInput()
             mesh = pv.wrap(dataset)
+            mesh = fix_mesh_with_trimesh(mesh)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save file: {str(e)}")
             return
 
-        # handle all other cases (TPMS, Spinodal, Strut, Hybrid), Layered don't reach here
         if file_path.endswith(".stl"):
             if mesh is not None:
                 mesh.save(file_path)
@@ -4848,19 +4858,15 @@ class SecondPage(QMainWindow):
                 try:
                     status = step_writer.Write(file_path)
                     QMessageBox.information(self, "Success", f"Model successfully saved to {file_path}")
-
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"Failed to save file: {str(e)}")
                     return
-
                 finally:
                     os.remove(stl_file)
                     if hasattr(self, 'progress_popup'):
                         self.progress_popup.done(0)
             else:
                 raise Exception("Failed to transfer shape to STEP format")
-
-            return
 
     # function used by the gen thread to update the self F,V .. to be used in the GUI
     def on_generation_finished(self, result):
